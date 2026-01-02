@@ -54,6 +54,24 @@ export {
   TAX_LAWS_VERSION
 } from '@/config/tax-laws';
 
+// Payment & Cash Handling Workflow
+export {
+  calculateCashHandlingFee,
+  calculatePaymentFlow,
+  getInvoiceWorkflowStatus,
+  checkBookingCompliance,
+  formatComplianceCheckResult,
+  DEFAULT_CASH_HANDLING_CONFIG,
+  type CashHandlingConfig,
+  type PaymentFlow,
+  type VendorPayment,
+  type InvoiceWorkflow,
+  type InvoiceWorkflowStage,
+  type ComplianceCheck,
+  type ComplianceBlocker,
+  type ComplianceWarning
+} from './payment-workflow';
+
 // Re-export types
 export type {
   TCSDetails,
