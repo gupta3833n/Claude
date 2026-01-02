@@ -5,7 +5,7 @@ export interface Device {
   id: string;
   displayId: string; // 9-digit ID like TeamViewer
   name: string;
-  type: 'desktop' | 'mobile' | 'tablet';
+  type: 'desktop' | 'mobile' | 'tablet' | 'web';
   platform: 'windows' | 'macos' | 'linux' | 'android' | 'ios' | 'web';
   version: string;
   status: 'online' | 'offline' | 'busy';
@@ -28,7 +28,7 @@ export interface DeviceSettings {
 
 interface RegisterDeviceInput {
   name: string;
-  type: 'desktop' | 'mobile' | 'tablet';
+  type: 'desktop' | 'mobile' | 'tablet' | 'web';
   platform: 'windows' | 'macos' | 'linux' | 'android' | 'ios' | 'web';
   version: string;
 }
