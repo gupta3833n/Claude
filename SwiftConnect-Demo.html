@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftConnect - Remote Desktop Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); min-height: 100vh; }
+    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .connection-id { font-family: 'Monaco', 'Menlo', monospace; letter-spacing: 4px; }
+  </style>
+</head>
+<body class="text-white">
+  <div id="app"></div>
+
+  <script>
+    // SwiftConnect Demo Application
+    const SERVER_URL = 'http://localhost:3000';
+
+    let socket = null;
+    let deviceInfo = { deviceId: null, displayId: null, sessionPassword: null };
+    let isConnected = false;
+    let isInSession = false;
+    let currentView = 'home';
+
+    // Format display ID as XXX XXX XXX
+    function formatDisplayId(id) {
+      if (!id) return '--- --- ---';
+      return id.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+    }
+
+    // Render the UI
+    function render() {
+      const app = document.getElementById('app');
+
+      if (isInSession) {
+        app.innerHTML = renderSession();
+      } else {
+        app.innerHTML = `
+          <div class="container mx-auto px-4 py-8 max-w-4xl">
+            ${renderHeader()}
+            ${renderTabs()}
+            ${currentView === 'home' ? renderHome() : renderConnect()}
+          </div>
+        `;
+      }
+
+      attachEventListeners();
+    }
+
+    function renderHeader() {
+      return `
+        <div class="text-center mb-8">
+          <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-indigo-500/30">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h1 class="text-4xl font-bold mb-2">SwiftConnect</h1>
+          <p class="text-gray-400">Fast & Secure Remote Desktop</p>
+          <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full ${isConnected ? 'bg-emerald-500/20' : 'bg-red-500/20'}">
+            <div class="w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 pulse' : 'bg-red-400'}"></div>
+            <span class="text-sm ${isConnected ? 'text-emerald-400' : 'text-red-400'}">${isConnected ? 'Connected to Server' : 'Connecting...'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTabs() {
+      return `
+        <div class="flex justify-center gap-2 mb-8">
+          <button onclick="switchView('home')" class="px-6 py-3 rounded-xl transition-all ${currentView === 'home' ? 'bg-indigo-500 text-white' : 'glass text-gray-400 hover:text-white'}">
+            Your Device
+          </button>
+          <button onclick="switchView('connect')" class="px-6 py-3 rounded-xl transition-all ${currentView === 'connect' ? 'bg-indigo-500 text-white' : 'glass text-gray-400 hover:text-white'}">
+            Connect to Partner
+          </button>
+        </div>
+      `;
+    }
+
+    function renderHome() {
+      return `
+        <div class="glass rounded-2xl p-8 border border-gray-700">
+          <div class="text-center mb-8">
+            <h2 class="text-xl font-semibold mb-2">Your SwiftConnect ID</h2>
+            <p class="text-gray-400 text-sm">Share this ID with others to allow remote access</p>
+          </div>
+
+          <div class="bg-gray-900/50 rounded-xl p-8 text-center mb-6">
+            <div class="connection-id text-4xl font-bold text-indigo-400 mb-4">
+              ${formatDisplayId(deviceInfo.displayId)}
+            </div>
+            <button onclick="copyToClipboard('${deviceInfo.displayId || ''}')" class="text-gray-400 hover:text-white text-sm flex items-center gap-2 mx-auto">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Copy ID
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between p-4 bg-gray-900/30 rounded-xl">
+            <div>
+              <p class="text-gray-400 text-sm">Session Password</p>
+              <p class="connection-id text-2xl font-bold">${deviceInfo.sessionPassword || '------'}</p>
+            </div>
+            <button onclick="copyToClipboard('${deviceInfo.sessionPassword || ''}')" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+              Copy
+            </button>
+          </div>
+
+          <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="p-4 bg-gray-900/30 rounded-xl text-center">
+              <div class="text-2xl mb-2">🔒</div>
+              <p class="text-sm text-gray-400">AES-256 Encrypted</p>
+            </div>
+            <div class="p-4 bg-gray-900/30 rounded-xl text-center">
+              <div class="text-2xl mb-2">⚡</div>
+              <p class="text-sm text-gray-400">Low Latency</p>
+            </div>
+            <div class="p-4 bg-gray-900/30 rounded-xl text-center">
+              <div class="text-2xl mb-2">📁</div>
+              <p class="text-sm text-gray-400">File Transfer</p>
+            </div>
+            <div class="p-4 bg-gray-900/30 rounded-xl text-center">
+              <div class="text-2xl mb-2">📋</div>
+              <p class="text-sm text-gray-400">Clipboard Sync</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderConnect() {
+      return `
+        <div class="glass rounded-2xl p-8 border border-gray-700 max-w-md mx-auto">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-500/20 rounded-full flex items-center justify-center">
+              <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+              </svg>
+            </div>
+            <h2 class="text-xl font-semibold mb-2">Connect to Partner</h2>
+            <p class="text-gray-400 text-sm">Enter the partner's SwiftConnect ID</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-gray-300 mb-2">Partner ID</label>
+              <input type="text" id="targetId" placeholder="XXX XXX XXX"
+                class="w-full px-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl text-white text-center text-xl connection-id placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                maxlength="11" oninput="formatInput(this)">
+            </div>
+
+            <div>
+              <label class="block text-sm text-gray-300 mb-2">Password</label>
+              <input type="text" id="password" placeholder="XXXXXX"
+                class="w-full px-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl text-white text-center text-xl connection-id placeholder-gray-500 focus:outline-none focus:border-indigo-500 uppercase"
+                maxlength="6" oninput="this.value = this.value.toUpperCase()">
+            </div>
+
+            <div id="errorMsg" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm text-center"></div>
+
+            <button onclick="requestConnection()" id="connectBtn"
+              class="w-full py-4 bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Connect
+            </button>
+          </div>
+
+          <div class="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+            <p class="text-amber-200 text-sm">
+              💡 <strong>How to connect:</strong> Ask your partner for their 9-digit ID and session password, then enter them above.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSession() {
+      return `
+        <div class="h-screen flex flex-col bg-gray-900">
+          <div class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full bg-emerald-400 pulse"></div>
+              <span class="font-medium">Connected Session</span>
+            </div>
+            <button onclick="endSession()" class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors">
+              End Session
+            </button>
+          </div>
+          <div class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-6xl mb-4 opacity-50">🖥️</div>
+              <p class="text-gray-400 mb-2">Remote session active</p>
+              <p class="text-gray-500 text-sm">Screen sharing would appear here</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Event handlers
+    function switchView(view) {
+      currentView = view;
+      render();
+    }
+
+    function formatInput(input) {
+      const digits = input.value.replace(/\D/g, '').slice(0, 9);
+      const parts = [];
+      for (let i = 0; i < digits.length; i += 3) {
+        parts.push(digits.slice(i, i + 3));
+      }
+      input.value = parts.join(' ');
+    }
+
+    function copyToClipboard(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+      });
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      if (el) {
+        el.textContent = msg;
+        el.classList.remove('hidden');
+      }
+    }
+
+    function hideError() {
+      const el = document.getElementById('errorMsg');
+      if (el) el.classList.add('hidden');
+    }
+
+    function requestConnection() {
+      const targetId = document.getElementById('targetId')?.value.replace(/\s/g, '');
+      const password = document.getElementById('password')?.value.toUpperCase();
+
+      hideError();
+
+      if (!targetId || targetId.length !== 9) {
+        showError('Please enter a valid 9-digit ID');
+        return;
+      }
+
+      if (!password || password.length !== 6) {
+        showError('Please enter a valid 6-character password');
+        return;
+      }
+
+      if (!socket || !isConnected) {
+        showError('Not connected to server');
+        return;
+      }
+
+      const btn = document.getElementById('connectBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Connecting...';
+
+      socket.emit('request-connection', { targetDisplayId: targetId, password }, (response) => {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Connect';
+
+        if (!response.success) {
+          showError(response.error || 'Connection failed');
+        }
+      });
+    }
+
+    function endSession() {
+      if (socket) {
+        socket.emit('end-session');
+      }
+      isInSession = false;
+      render();
+    }
+
+    function attachEventListeners() {
+      // Event listeners are attached inline in the HTML
+    }
+
+    // Socket connection
+    function connectToServer() {
+      try {
+        socket = io(SERVER_URL, {
+          transports: ['websocket'],
+          reconnection: true,
+          reconnectionAttempts: 10,
+        });
+
+        socket.on('connect', () => {
+          console.log('Connected to server');
+          isConnected = true;
+
+          // Register device
+          socket.emit('register-device', {
+            deviceName: 'Web Browser',
+            deviceType: 'web',
+            platform: 'web',
+            version: '1.0.0',
+          }, (response) => {
+            if (response.success) {
+              deviceInfo = {
+                deviceId: response.deviceId,
+                displayId: response.displayId,
+                sessionPassword: response.sessionPassword,
+              };
+            }
+            render();
+          });
+        });
+
+        socket.on('disconnect', () => {
+          isConnected = false;
+          render();
+        });
+
+        socket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
+          isConnected = false;
+          render();
+        });
+
+        socket.on('connection-accepted', (data) => {
+          isInSession = true;
+          render();
+        });
+
+        socket.on('connection-rejected', (data) => {
+          showError(data.reason || 'Connection rejected');
+        });
+
+        socket.on('incoming-connection', (data) => {
+          if (confirm(`${data.sourceDeviceName} wants to connect. Accept?`)) {
+            socket.emit('accept-connection', { sourceDeviceId: data.sourceDeviceId });
+            isInSession = true;
+            render();
+          } else {
+            socket.emit('reject-connection', { sourceDeviceId: data.sourceDeviceId });
+          }
+        });
+
+        socket.on('session-ended', () => {
+          isInSession = false;
+          render();
+        });
+
+        socket.on('peer-disconnected', () => {
+          isInSession = false;
+          alert('Peer disconnected');
+          render();
+        });
+
+      } catch (error) {
+        console.error('Failed to connect:', error);
+      }
+    }
+
+    // Initialize
+    render();
+    connectToServer();
+  </script>
+</body>
+</html>
