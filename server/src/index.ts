@@ -493,28 +493,39 @@ app.get('/', (req, res) => {
     // Initialize Socket.IO
     socket = io();
 
+    console.log('Socket.IO initializing...');
+
     socket.on('connect', function() {
-      setStatus('✅', 'Connected to server', 'success');
+      console.log('Socket connected! ID:', socket.id);
+      setStatus('✅', 'Connected! Registering device...', 'success');
+
       socket.emit('register-device', {
         deviceName: navigator.platform || 'Web Browser',
         deviceType: 'web',
         platform: 'web',
         version: '1.0.0'
       }, function(res) {
-        if (res.success) {
+        console.log('Register response:', res);
+        if (res && res.success) {
           deviceInfo = res;
           document.getElementById('myId').textContent = formatId(res.displayId);
           document.getElementById('myPass').textContent = res.sessionPassword;
+          setStatus('✅', 'Connected to server', 'success');
+        } else {
+          console.error('Registration failed:', res);
+          setStatus('❌', 'Registration failed: ' + (res ? res.error : 'No response'), 'error');
         }
       });
     });
 
-    socket.on('disconnect', function() {
-      setStatus('❌', 'Disconnected from server', 'error');
+    socket.on('disconnect', function(reason) {
+      console.log('Socket disconnected:', reason);
+      setStatus('❌', 'Disconnected: ' + reason, 'error');
     });
 
-    socket.on('connect_error', function() {
-      setStatus('❌', 'Connection failed', 'error');
+    socket.on('connect_error', function(err) {
+      console.error('Connection error:', err);
+      setStatus('❌', 'Connection error: ' + err.message, 'error');
     });
 
     socket.on('incoming-connection', function(data) {

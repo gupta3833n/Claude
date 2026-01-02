@@ -64,6 +64,7 @@ export class SignalingService {
 
   private async handleRegisterDevice(socket: Socket, data: any, callback: Function): Promise<void> {
     try {
+      this.logger.info(`Register device request: ${JSON.stringify(data)}`);
       const { deviceName, deviceType, platform, version } = data;
 
       // Generate or retrieve device ID
@@ -72,12 +73,14 @@ export class SignalingService {
         : null;
 
       if (!device) {
+        this.logger.info(`Creating new device: ${deviceName}, type: ${deviceType}`);
         device = await this.deviceService.registerDevice({
           name: deviceName,
-          type: deviceType,
-          platform,
-          version,
+          type: deviceType || 'web',
+          platform: platform || 'web',
+          version: version || '1.0.0',
         });
+        this.logger.info(`Device created: ${device.id}, displayId: ${device.displayId}`);
       }
 
       // Generate session password
