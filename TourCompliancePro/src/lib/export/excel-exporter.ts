@@ -91,16 +91,16 @@ export function exportTCSReportToExcel(
     'PAN': '',
     'Destination': '',
     'Package Value': tcsBookings.reduce((sum, b) => sum + (b.grandTotal - b.tcsDetails.totalTcs), 0),
-    'Previous Cumulative': '',
-    'New Cumulative': '',
-    'Threshold': '',
+    'Previous Cumulative': 0,
+    'New Cumulative': 0,
+    'Threshold': 0,
     'Amount @ 5%': tcsBookings.reduce((sum, b) => sum + b.tcsDetails.amountAt5Percent, 0),
     'TCS @ 5%': tcsBookings.reduce((sum, b) => sum + b.tcsDetails.tcsAt5Percent, 0),
     'Amount @ 20%': tcsBookings.reduce((sum, b) => sum + b.tcsDetails.amountAt20Percent, 0),
     'TCS @ 20%': tcsBookings.reduce((sum, b) => sum + b.tcsDetails.tcsAt20Percent, 0),
     'Total TCS': totalTcs,
     'Effective Rate %': ''
-  } as typeof data[0]);
+  });
 
   const filename = `TCS_Report_${format(period.startDate, 'yyyyMMdd')}_${format(period.endDate, 'yyyyMMdd')}.xlsx`;
   downloadExcel(data, 'TCS Report', filename);
@@ -267,15 +267,15 @@ export function exportCashReportToExcel(
     'Booking No': 'SUMMARY',
     'Date': '',
     'Client': '',
-    'Adults': '',
-    'Minors': '',
-    'Max Cash Allowed': '',
+    'Adults': cashBookings.reduce((sum, b) => sum + b.adultCount, 0),
+    'Minors': cashBookings.reduce((sum, b) => sum + b.childCount, 0),
+    'Max Cash Allowed': cashBookings.reduce((sum, b) => sum + b.cashLimitDetails.maxCashAllowed, 0),
     'Cash Received': cashBookings.reduce((sum, b) => sum + b.cashReceived, 0),
     'Is Compliant': violations.length === 0 ? 'ALL COMPLIANT' : `${violations.length} VIOLATIONS`,
     'Violation Amount': violations.reduce((sum, b) => sum + (b.cashLimitDetails.violationAmount || 0), 0),
     'Potential Penalty': violations.reduce((sum, b) => sum + (b.cashLimitDetails.penaltyAmount || 0), 0),
     'Warning': ''
-  } as typeof data[0]);
+  });
 
   const filename = `Section_269ST_Report_${format(new Date(), 'yyyyMMdd')}.xlsx`;
   downloadExcel(data, 'Cash Report', filename);

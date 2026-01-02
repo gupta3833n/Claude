@@ -168,7 +168,7 @@ export async function updateRecord<T extends { id: string }>(
   // Track changes for audit
   const changes = Object.entries(updates).map(([field, newValue]) => ({
     field,
-    oldValue: (existing as Record<string, unknown>)[field],
+    oldValue: (existing as unknown as Record<string, unknown>)[field],
     newValue
   })).filter(c => c.oldValue !== c.newValue);
 
@@ -269,7 +269,7 @@ export async function getActiveRecords<T extends { id: string }>(
   if (filter) {
     query = query.filter(record => {
       return Object.entries(filter).every(([key, value]) =>
-        (record as Record<string, unknown>)[key] === value
+        (record as unknown as Record<string, unknown>)[key] === value
       );
     });
   }
@@ -347,7 +347,8 @@ export async function getNextDocumentNumber(
   const nextNumber = config.currentNumber + 1;
 
   // Update current number
-  await db.numberingConfigs.update(config.id, { currentNumber: nextNumber });
+  const configWithId = config as NumberingConfig & { id: string };
+  await db.numberingConfigs.update(configWithId.id, { currentNumber: nextNumber });
 
   return formatDocumentNumber(config, nextNumber);
 }

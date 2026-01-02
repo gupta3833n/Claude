@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Company, UserRole, Permission } from '@/types';
 import { db } from '@/lib/db/database';
-import CryptoJS from 'crypto-js';
 
 interface AuthContextType {
   user: User | null;
@@ -18,9 +17,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Simple hash function for PIN (in production, use proper crypto)
-function hashPin(pin: string): string {
-  return CryptoJS.SHA256(pin).toString();
+// Simple hash function for PIN using Web Crypto API
+async function hashPin(pin: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -129,7 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyPin = useCallback(async (pin: string): Promise<boolean> => {
     if (!user || !user.pin) return false;
-    return hashPin(pin) === user.pin;
+    const hashedPin = await hashPin(pin);
+    return hashedPin === user.pin;
   }, [user]);
 
   const hasPermission = useCallback((resource: string, action: 'create' | 'read' | 'update' | 'delete'): boolean => {

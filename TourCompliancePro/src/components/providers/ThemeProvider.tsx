@@ -117,7 +117,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const toggleDark = () => setIsDark(prev => !prev);
 
   const setColors = (newColors: Partial<typeof defaultColors>) => {
-    setColorsState(prev => ({ ...prev, ...newColors }));
+    setColorsState((prev: typeof defaultColors) => ({ ...prev, ...newColors }));
   };
 
   const resetColors = () => {

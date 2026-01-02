@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function Login() {
   const navigate = useNavigate();
