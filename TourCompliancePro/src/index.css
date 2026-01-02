@@ -1,0 +1,426 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   CSS VARIABLES FOR THEME CUSTOMIZATION
+   These can be overridden by the theme provider
+   ============================================================================ */
+
+:root {
+  /* Primary color (Dark Cerulean - MakeMyTrip inspired) */
+  --color-primary-50: 240 249 255;
+  --color-primary-100: 224 242 254;
+  --color-primary-200: 186 230 253;
+  --color-primary-300: 125 211 252;
+  --color-primary-400: 56 189 248;
+  --color-primary-500: 22 72 128;
+  --color-primary-600: 18 60 107;
+  --color-primary-700: 14 48 85;
+  --color-primary-800: 10 36 64;
+  --color-primary-900: 6 24 42;
+
+  /* Accent color (Pigment Red) */
+  --color-accent-50: 254 242 242;
+  --color-accent-100: 254 226 226;
+  --color-accent-500: 235 34 38;
+  --color-accent-600: 220 38 38;
+
+  /* Success (Emerald) */
+  --color-success-50: 236 253 245;
+  --color-success-500: 16 185 129;
+  --color-success-600: 5 150 105;
+
+  /* Warning (Amber) */
+  --color-warning-50: 255 251 235;
+  --color-warning-500: 245 158 11;
+  --color-warning-600: 217 119 6;
+
+  /* Danger (Red) */
+  --color-danger-50: 254 242 242;
+  --color-danger-500: 239 68 68;
+  --color-danger-600: 220 38 38;
+
+  /* Neutral colors */
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-text: #1E293B;
+  --color-text-secondary: #64748B;
+  --color-border: #E2E8F0;
+
+  /* Toast colors */
+  --toast-bg: #FFFFFF;
+  --toast-color: #1E293B;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Dark mode */
+.dark {
+  --color-primary-50: 6 24 42;
+  --color-primary-100: 10 36 64;
+  --color-primary-200: 14 48 85;
+  --color-primary-500: 56 189 248;
+  --color-primary-600: 22 72 128;
+
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-border: #334155;
+
+  --toast-bg: #1E293B;
+  --toast-color: #F1F5F9;
+}
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: rgb(var(--color-primary-50));
+  color: var(--color-text);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Indian number formatting */
+.amount {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING
+   ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-primary-200));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary-300));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================================
+   COMPONENT STYLES
+   ============================================================================ */
+
+/* Card component */
+@layer components {
+  .card {
+    @apply bg-white dark:bg-slate-800 rounded-xl shadow-card p-4 md:p-6;
+    @apply border border-slate-100 dark:border-slate-700;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200;
+    @apply hover:shadow-card-hover hover:-translate-y-0.5;
+  }
+
+  /* Button variants */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-4 py-2 rounded-lg font-medium;
+    @apply transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply bg-primary-500 text-white;
+    @apply hover:bg-primary-600;
+    @apply focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200;
+    @apply hover:bg-slate-200 dark:hover:bg-slate-600;
+    @apply focus:ring-slate-500;
+  }
+
+  .btn-accent {
+    @apply bg-accent-500 text-white;
+    @apply hover:bg-accent-600;
+    @apply focus:ring-accent-500;
+  }
+
+  .btn-success {
+    @apply bg-success-500 text-white;
+    @apply hover:bg-success-600;
+    @apply focus:ring-success-500;
+  }
+
+  .btn-danger {
+    @apply bg-danger-500 text-white;
+    @apply hover:bg-danger-600;
+    @apply focus:ring-danger-500;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-slate-600 dark:text-slate-300;
+    @apply hover:bg-slate-100 dark:hover:bg-slate-700;
+    @apply focus:ring-slate-500;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-lg;
+    @apply bg-white dark:bg-slate-800;
+    @apply border border-slate-200 dark:border-slate-600;
+    @apply text-slate-900 dark:text-slate-100;
+    @apply placeholder:text-slate-400 dark:placeholder:text-slate-500;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .input-error {
+    @apply border-danger-500 focus:ring-danger-500;
+  }
+
+  /* Label styles */
+  .label {
+    @apply block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-success-50 text-success-600 dark:bg-success-500/20 dark:text-success-500;
+  }
+
+  .badge-warning {
+    @apply bg-warning-50 text-warning-600 dark:bg-warning-500/20 dark:text-warning-500;
+  }
+
+  .badge-danger {
+    @apply bg-danger-50 text-danger-600 dark:bg-danger-500/20 dark:text-danger-500;
+  }
+
+  .badge-info {
+    @apply bg-primary-50 text-primary-600 dark:bg-primary-500/20 dark:text-primary-400;
+  }
+
+  /* Status indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-success {
+    @apply bg-success-500;
+  }
+
+  .status-dot-warning {
+    @apply bg-warning-500;
+  }
+
+  .status-dot-danger {
+    @apply bg-danger-500;
+  }
+
+  .status-dot-neutral {
+    @apply bg-slate-400;
+  }
+
+  /* Amount display (for Indian Rupee) */
+  .rupee {
+    @apply font-mono font-medium;
+  }
+
+  .rupee::before {
+    content: '₹';
+    margin-right: 0.125rem;
+  }
+
+  /* Tax labels */
+  .tax-label {
+    @apply text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+/* Safe area for mobile devices with notches */
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .safe-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .input {
+    min-height: 44px;
+  }
+}
