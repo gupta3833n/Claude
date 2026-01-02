@@ -94,8 +94,20 @@ export interface TCSConfig {
 /**
  * TCS configurations by financial year
  *
- * IMPORTANT: The threshold changed from ₹7L to ₹10L from FY 2025-26
+ * CRITICAL: TCS applies from ₹1 (FIRST RUPEE) - NO EXEMPTION
+ * =============================================================
+ * The threshold is NOT an exemption limit. It is where the RATE changes:
+ * - Below threshold: 5% TCS
+ * - Above threshold: 20% TCS
+ *
+ * For overseas tour packages, TCS is collected even on amounts less than
+ * the threshold. This differs from other LRS remittances.
+ *
+ * FY 2024-25: Threshold ₹7L (5% up to ₹7L, 20% above)
+ * FY 2025-26: Threshold ₹10L (5% up to ₹10L, 20% above)
  * (Budget 2025 amendment)
+ *
+ * Reference: Section 206C(1G) of Income Tax Act, 1961
  */
 export const TCS_CONFIG: Record<string, TCSConfig> = {
   '2023-24': {

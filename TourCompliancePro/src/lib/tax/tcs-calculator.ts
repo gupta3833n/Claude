@@ -4,17 +4,29 @@
  *
  * Implements TCS calculation as per Section 206C(1G) using SLAB METHOD.
  *
+ * CRITICAL: TCS applies from RUPEE 1 (₹1)
+ * ========================================
+ * There is NO exemption threshold for overseas tour packages.
+ * The threshold (₹7L for FY 2024-25, ₹10L for FY 2025-26) only determines
+ * where the RATE CHANGES from 5% to 20%. It is NOT an exemption limit.
+ *
  * Key Rules:
- * 1. TCS applies to overseas tour packages only
- * 2. Threshold is per PAN per Financial Year
+ * 1. TCS applies to overseas tour packages from the FIRST RUPEE
+ * 2. Threshold is per PAN per Financial Year (determines rate change point)
  * 3. Rate 1 (5%) applies up to threshold
  * 4. Rate 2 (20%) applies above threshold
  * 5. SLAB METHOD: If a transaction crosses threshold, split calculation
  *
- * Exemptions:
- * - Pure Agent: No TCS (acting on behalf of customer)
- * - Commission Agent: No TCS on commission portion
- * - Domestic packages: No TCS under this section
+ * Example: ₹5,00,000 package (first booking of FY, threshold ₹7L)
+ * - TCS = ₹5,00,000 × 5% = ₹25,000 (NOT exempt, charged from ₹1)
+ *
+ * Exemptions (where TCS is NOT applicable):
+ * - Pure Agent: No TCS (acting on behalf of customer under Rule 33)
+ * - Commission Agent: No TCS on commission portion only
+ * - Domestic packages: No TCS under this section (only overseas)
+ *
+ * Reference: Section 206C(1G) of Income Tax Act, 1961
+ * Source: https://cleartax.in/s/tcs-on-overseas-tour-package
  */
 
 import {

@@ -4,6 +4,13 @@
  *
  * Test cases to verify all tax calculations are correct.
  *
+ * IMPORTANT TCS NOTE:
+ * TCS under Section 206C(1G) applies from ₹1 (first rupee) for overseas
+ * tour packages. The threshold (₹7L/₹10L) is NOT an exemption - it only
+ * determines where the rate changes from 5% to 20%.
+ *
+ * Example: ₹5L package = ₹25,000 TCS (5% charged from ₹1, not exempt)
+ *
  * Run with: npm test
  */
 
