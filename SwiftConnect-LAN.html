@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwiftConnect LAN - Offline Remote Desktop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; padding: 40px 0; }
+    .logo { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3); }
+    .logo svg { width: 40px; height: 40px; }
+    h1 { font-size: 2.5rem; margin-bottom: 10px; }
+    .subtitle { color: #94a3b8; }
+    .lan-badge { display: inline-flex; align-items: center; gap: 8px; background: #10b98120; color: #10b981; padding: 8px 16px; border-radius: 20px; margin-top: 15px; font-size: 14px; }
+    .lan-badge::before { content: ''; width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    .card-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+
+    .server-config { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 13px; color: #94a3b8; }
+    .input-group input { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px 16px; color: white; font-size: 16px; }
+    .input-group input:focus { outline: none; border-color: #6366f1; }
+
+    .btn { padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: #6366f1; color: white; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-outline { background: transparent; border: 1px solid #334155; color: #94a3b8; }
+    .btn-outline:hover { border-color: #6366f1; color: white; }
+
+    .status { padding: 16px; border-radius: 12px; margin-bottom: 20px; }
+    .status-success { background: #10b98120; border: 1px solid #10b98140; }
+    .status-error { background: #ef444420; border: 1px solid #ef444440; }
+    .status-warning { background: #f59e0b20; border: 1px solid #f59e0b40; }
+
+    .id-display { background: #0f172a; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0; }
+    .id-text { font-family: 'Monaco', 'Menlo', monospace; font-size: 2rem; font-weight: bold; color: #6366f1; letter-spacing: 4px; margin-bottom: 10px; }
+    .password-text { font-family: monospace; font-size: 1.5rem; color: #f59e0b; letter-spacing: 2px; }
+
+    .device-list { display: flex; flex-direction: column; gap: 12px; }
+    .device-item { display: flex; align-items: center; justify-content: space-between; background: #0f172a; border-radius: 12px; padding: 16px; }
+    .device-info { display: flex; align-items: center; gap: 12px; }
+    .device-icon { width: 44px; height: 44px; background: #334155; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .device-name { font-weight: 500; }
+    .device-ip { font-size: 13px; color: #64748b; font-family: monospace; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab { padding: 12px 24px; border-radius: 10px; background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 15px; }
+    .tab.active { background: #6366f1; color: white; }
+
+    .connect-form { display: flex; flex-direction: column; gap: 16px; }
+    .connect-form input { background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 16px; color: white; font-size: 20px; text-align: center; font-family: monospace; letter-spacing: 4px; }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 20px; }
+    .feature { background: #0f172a40; border-radius: 12px; padding: 16px; text-align: center; }
+    .feature-icon { font-size: 24px; margin-bottom: 8px; }
+    .feature-text { font-size: 13px; color: #94a3b8; }
+
+    .session-view { position: fixed; inset: 0; background: #000; display: none; flex-direction: column; }
+    .session-view.active { display: flex; }
+    .session-header { background: #1e293b; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+    .session-content { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .modal.active { display: flex; }
+    .modal-content { background: #1e293b; border-radius: 20px; padding: 32px; max-width: 400px; width: 90%; text-align: center; }
+    .modal-icon { font-size: 48px; margin-bottom: 16px; }
+    .modal-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    .modal-text { color: #94a3b8; margin-bottom: 24px; }
+    .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="container" id="mainView">
+    <div class="header">
+      <div class="logo">
+        <svg fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <h1>SwiftConnect LAN</h1>
+      <p class="subtitle">Offline Remote Desktop for Local Networks</p>
+      <div class="lan-badge">LAN Mode - No Internet Required</div>
+    </div>
+
+    <!-- Server Configuration -->
+    <div class="card">
+      <div class="card-title">🖥️ Server Configuration</div>
+      <div class="server-config">
+        <div class="input-group">
+          <label>Server Address (your office server IP)</label>
+          <input type="text" id="serverUrl" value="http://localhost:3000" placeholder="http://192.168.1.100:3000">
+        </div>
+        <button class="btn btn-primary" onclick="connectToServer()">Connect</button>
+      </div>
+      <div style="margin-top: 12px; font-size: 13px; color: #64748b;">
+        💡 Run <code style="background: #334155; padding: 2px 6px; border-radius: 4px;">./start-server.sh</code> on any PC in your network, then enter its IP here.
+      </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div id="statusBox" class="status status-warning">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span id="statusIcon">⏳</span>
+        <span id="statusText">Not connected to server</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('home')">Your Device</button>
+      <button class="tab" onclick="switchTab('connect')">Connect to Partner</button>
+      <button class="tab" onclick="switchTab('lan')">LAN Devices</button>
+    </div>
+
+    <!-- Home Tab -->
+    <div id="homeTab" class="card">
+      <div class="card-title">🔑 Your Connection Info</div>
+      <p style="color: #94a3b8; margin-bottom: 16px;">Share this with colleagues on your local network:</p>
+
+      <div class="id-display">
+        <div class="id-text" id="myDisplayId">--- --- ---</div>
+        <div style="margin: 8px 0; color: #64748b;">Password</div>
+        <div class="password-text" id="myPassword">------</div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button class="btn btn-outline" onclick="copyId()">📋 Copy ID</button>
+        <button class="btn btn-outline" onclick="copyPassword()">📋 Copy Password</button>
+      </div>
+
+      <div class="features">
+        <div class="feature"><div class="feature-icon">🔒</div><div class="feature-text">Encrypted</div></div>
+        <div class="feature"><div class="feature-icon">📁</div><div class="feature-text">File Transfer</div></div>
+        <div class="feature"><div class="feature-icon">⚡</div><div class="feature-text">Low Latency</div></div>
+        <div class="feature"><div class="feature-icon">🌐</div><div class="feature-text">LAN Only</div></div>
+      </div>
+    </div>
+
+    <!-- Connect Tab -->
+    <div id="connectTab" class="card" style="display: none;">
+      <div class="card-title">🔗 Connect to Partner</div>
+      <p style="color: #94a3b8; margin-bottom: 20px;">Enter your colleague's ID and password:</p>
+
+      <div class="connect-form">
+        <input type="text" id="targetId" placeholder="XXX XXX XXX" maxlength="11" oninput="formatId(this)">
+        <input type="text" id="targetPassword" placeholder="PASSWORD" maxlength="6" style="text-transform: uppercase;">
+        <button class="btn btn-success" onclick="requestConnection()" id="connectBtn" style="width: 100%; justify-content: center; padding: 16px;">
+          🚀 Connect
+        </button>
+      </div>
+
+      <div id="connectError" style="display: none; margin-top: 16px; padding: 12px; background: #ef444420; border-radius: 10px; color: #f87171;"></div>
+    </div>
+
+    <!-- LAN Devices Tab -->
+    <div id="lanTab" class="card" style="display: none;">
+      <div class="card-title">📡 Devices on Your Network</div>
+      <p style="color: #94a3b8; margin-bottom: 16px;">Auto-discovered SwiftConnect devices on this LAN:</p>
+
+      <div id="deviceList" class="device-list">
+        <div style="text-align: center; padding: 40px; color: #64748b;">
+          <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+          <div>Scanning network...</div>
+          <div style="font-size: 13px; margin-top: 8px;">Devices will appear here automatically</div>
+        </div>
+      </div>
+
+      <button class="btn btn-outline" onclick="refreshDevices()" style="width: 100%; margin-top: 16px; justify-content: center;">
+        🔄 Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Session View -->
+  <div class="session-view" id="sessionView">
+    <div class="session-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></div>
+        <span id="connectedTo">Connected</span>
+      </div>
+      <button class="btn btn-danger" onclick="endSession()">End Session</button>
+    </div>
+    <div class="session-content">
+      <div style="text-align: center;">
+        <div style="font-size: 64px; margin-bottom: 20px;">🖥️</div>
+        <div style="font-size: 18px; margin-bottom: 8px;">Remote Session Active</div>
+        <div style="color: #64748b;">Screen sharing would appear here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Connection Modal -->
+  <div class="modal" id="incomingModal">
+    <div class="modal-content">
+      <div class="modal-icon">📞</div>
+      <div class="modal-title">Incoming Connection</div>
+      <div class="modal-text"><strong id="incomingName">Someone</strong> wants to connect to your computer</div>
+      <div class="modal-buttons">
+        <button class="btn btn-outline" onclick="rejectConnection()">Decline</button>
+        <button class="btn btn-success" onclick="acceptConnection()">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    let socket = null;
+    let deviceInfo = { deviceId: null, displayId: null, sessionPassword: null };
+    let isConnected = false;
+    let pendingConnection = null;
+    let lanDevices = [];
+
+    function formatDisplayId(id) {
+      if (!id) return '--- --- ---';
+      return id.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+    }
+
+    function formatId(input) {
+      const digits = input.value.replace(/\D/g, '').slice(0, 9);
+      const parts = [];
+      for (let i = 0; i < digits.length; i += 3) parts.push(digits.slice(i, i + 3));
+      input.value = parts.join(' ');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.card').forEach(c => c.style.display = 'none');
+      event.target.classList.add('active');
+      document.getElementById(tab + 'Tab').style.display = 'block';
+      if (tab === 'lan') refreshDevices();
+    }
+
+    function updateStatus(type, icon, text) {
+      const box = document.getElementById('statusBox');
+      box.className = 'status status-' + type;
+      document.getElementById('statusIcon').textContent = icon;
+      document.getElementById('statusText').textContent = text;
+    }
+
+    function connectToServer() {
+      const url = document.getElementById('serverUrl').value.trim();
+      if (!url) return;
+
+      updateStatus('warning', '⏳', 'Connecting to ' + url + '...');
+
+      if (socket) socket.disconnect();
+
+      try {
+        socket = io(url, { transports: ['websocket'], reconnection: true, timeout: 5000 });
+
+        socket.on('connect', () => {
+          isConnected = true;
+          updateStatus('success', '✅', 'Connected to server at ' + url);
+
+          socket.emit('register-device', {
+            deviceName: 'Web Browser (' + (navigator.platform || 'Unknown') + ')',
+            deviceType: 'web',
+            platform: 'web',
+            version: '1.0.0',
+          }, (response) => {
+            if (response.success) {
+              deviceInfo = {
+                deviceId: response.deviceId,
+                displayId: response.displayId,
+                sessionPassword: response.sessionPassword,
+              };
+              document.getElementById('myDisplayId').textContent = formatDisplayId(response.displayId);
+              document.getElementById('myPassword').textContent = response.sessionPassword;
+            }
+          });
+        });
+
+        socket.on('disconnect', () => {
+          isConnected = false;
+          updateStatus('error', '❌', 'Disconnected from server');
+        });
+
+        socket.on('connect_error', (err) => {
+          updateStatus('error', '❌', 'Connection failed: ' + err.message);
+        });
+
+        socket.on('incoming-connection', (data) => {
+          pendingConnection = data;
+          document.getElementById('incomingName').textContent = data.sourceDeviceName;
+          document.getElementById('incomingModal').classList.add('active');
+        });
+
+        socket.on('connection-accepted', (data) => {
+          document.getElementById('connectedTo').textContent = 'Connected to ' + data.targetDeviceName;
+          document.getElementById('sessionView').classList.add('active');
+        });
+
+        socket.on('connection-rejected', (data) => {
+          showError('Connection rejected: ' + (data.reason || 'No reason given'));
+        });
+
+        socket.on('session-ended', () => {
+          document.getElementById('sessionView').classList.remove('active');
+        });
+
+        socket.on('peer-disconnected', () => {
+          document.getElementById('sessionView').classList.remove('active');
+          alert('Partner disconnected');
+        });
+
+      } catch (err) {
+        updateStatus('error', '❌', 'Failed: ' + err.message);
+      }
+    }
+
+    function requestConnection() {
+      const id = document.getElementById('targetId').value.replace(/\s/g, '');
+      const password = document.getElementById('targetPassword').value.toUpperCase();
+
+      if (!id || id.length !== 9) { showError('Please enter a valid 9-digit ID'); return; }
+      if (!password) { showError('Please enter the password'); return; }
+      if (!socket || !isConnected) { showError('Not connected to server'); return; }
+
+      const btn = document.getElementById('connectBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Connecting...';
+      hideError();
+
+      socket.emit('request-connection', { targetDisplayId: id, password }, (response) => {
+        btn.disabled = false;
+        btn.textContent = '🚀 Connect';
+        if (!response.success) showError(response.error || 'Connection failed');
+      });
+    }
+
+    function acceptConnection() {
+      if (pendingConnection && socket) {
+        socket.emit('accept-connection', { sourceDeviceId: pendingConnection.sourceDeviceId });
+        document.getElementById('connectedTo').textContent = 'Connected to ' + pendingConnection.sourceDeviceName;
+        document.getElementById('sessionView').classList.add('active');
+      }
+      document.getElementById('incomingModal').classList.remove('active');
+      pendingConnection = null;
+    }
+
+    function rejectConnection() {
+      if (pendingConnection && socket) {
+        socket.emit('reject-connection', { sourceDeviceId: pendingConnection.sourceDeviceId, reason: 'Declined' });
+      }
+      document.getElementById('incomingModal').classList.remove('active');
+      pendingConnection = null;
+    }
+
+    function endSession() {
+      if (socket) socket.emit('end-session');
+      document.getElementById('sessionView').classList.remove('active');
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('connectError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('connectError').style.display = 'none';
+    }
+
+    function copyId() {
+      if (deviceInfo.displayId) {
+        navigator.clipboard.writeText(deviceInfo.displayId);
+        alert('ID copied!');
+      }
+    }
+
+    function copyPassword() {
+      if (deviceInfo.sessionPassword) {
+        navigator.clipboard.writeText(deviceInfo.sessionPassword);
+        alert('Password copied!');
+      }
+    }
+
+    async function refreshDevices() {
+      const url = document.getElementById('serverUrl').value.trim();
+      const list = document.getElementById('deviceList');
+
+      try {
+        const response = await fetch(url + '/api/lan/devices');
+        const data = await response.json();
+        lanDevices = data.devices || [];
+
+        if (lanDevices.length === 0) {
+          list.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #64748b;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📡</div>
+              <div>No other devices found</div>
+              <div style="font-size: 13px; margin-top: 8px;">Make sure other PCs are running SwiftConnect</div>
+            </div>`;
+        } else {
+          list.innerHTML = lanDevices.map(d => `
+            <div class="device-item">
+              <div class="device-info">
+                <div class="device-icon">🖥️</div>
+                <div>
+                  <div class="device-name">${d.name}</div>
+                  <div class="device-ip">${d.ip}:${d.port} • ID: ${formatDisplayId(d.displayId)}</div>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="quickConnect('${d.displayId}')">Connect</button>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        list.innerHTML = `<div style="text-align: center; padding: 20px; color: #f87171;">Failed to fetch devices. Make sure server is running.</div>`;
+      }
+    }
+
+    function quickConnect(displayId) {
+      switchTab('connect');
+      document.getElementById('targetId').value = formatDisplayId(displayId);
+      document.getElementById('targetPassword').focus();
+    }
+
+    // Auto-connect on load
+    connectToServer();
+  </script>
+</body>
+</html>
