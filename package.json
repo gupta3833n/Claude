@@ -1,0 +1,52 @@
+{
+  "name": "swiftconnect",
+  "version": "1.0.0",
+  "description": "Fast, secure remote desktop and file sharing application",
+  "private": true,
+  "workspaces": [
+    "server",
+    "desktop",
+    "web",
+    "mobile",
+    "shared"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:server && npm run install:desktop && npm run install:web && npm run install:mobile",
+    "install:server": "cd server && npm install",
+    "install:desktop": "cd desktop && npm install",
+    "install:web": "cd web && npm install",
+    "install:mobile": "cd mobile && npm install",
+    "dev:server": "cd server && npm run dev",
+    "dev:desktop": "cd desktop && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "build:server": "cd server && npm run build",
+    "build:desktop": "cd desktop && npm run build",
+    "build:web": "cd web && npm run build",
+    "build:all": "npm run build:server && npm run build:desktop && npm run build:web",
+    "package:desktop": "cd desktop && npm run package",
+    "package:desktop:win": "cd desktop && npm run package:win",
+    "package:desktop:mac": "cd desktop && npm run package:mac",
+    "package:desktop:linux": "cd desktop && npm run package:linux",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "clean": "rm -rf node_modules server/node_modules desktop/node_modules web/node_modules mobile/node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swiftconnect/swiftconnect.git"
+  },
+  "keywords": [
+    "remote-desktop",
+    "screen-sharing",
+    "file-transfer",
+    "webrtc",
+    "cross-platform"
+  ],
+  "author": "SwiftConnect Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

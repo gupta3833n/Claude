@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+build/
+release/
+*.tgz
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Mobile
+mobile/ios/Pods/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+*.apk
+*.aab
+*.ipa
+
+# Desktop
+desktop/release/
+*.dmg
+*.exe
+*.deb
+*.AppImage
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+
+# Secrets
+*.pem
+*.key
+credentials.json
+serviceAccount.json
